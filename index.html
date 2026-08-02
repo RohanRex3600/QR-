@@ -1,0 +1,1109 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Decimen - Optical Transfer</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow: hidden; 
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .header {
+      padding: 20px 16px 16px 16px; 
+      border-bottom: 1px solid #1a1a1a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 10, 10, 0.95);
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .logo::before {
+      content: "◆";
+      font-size: 20px;
+      color: #00d9ff;
+      text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #888;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-btn.active {
+      border-color: #00d9ff;
+      color: #00d9ff;
+      background: rgba(0, 217, 255, 0.1);
+      box-shadow: 0 0 15px rgba(0, 217, 255, 0.1);
+    }
+
+    .settings-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #333;
+      background: transparent;
+      color: #888;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .settings-btn:active {
+      border-color: #00d9ff;
+      color: #00d9ff;
+      transform: scale(0.95);
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 20px;
+      position: relative;
+    }
+
+    .sender-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      gap: 24px;
+      max-width: 500px;
+    }
+
+    .qr-display {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .qr-box {
+      width: 100%;
+      max-width: 350px;
+      aspect-ratio: 1;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 15px 50px rgba(0, 217, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    #qrContainer {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* NEW: We style the image directly so it fits perfectly */
+    #qrImage {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      display: none; /* Hidden until we have a QR code to show */
+    }
+
+    .sender-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .file-selector {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .file-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 217, 255, 0.05);
+      border: 2px dashed rgba(0, 217, 255, 0.3);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+      transition: all 0.3s ease;
+      min-height: 80px;
+    }
+
+    .file-label span {
+      font-size: 12px;
+      margin-top: 6px;
+      color: #666;
+    }
+
+    .file-label:active {
+      border-color: #00d9ff;
+      background: rgba(0, 217, 255, 0.1);
+      transform: scale(0.98);
+    }
+
+    .file-label.loaded {
+      border-style: solid;
+      color: #00d9ff;
+      background: rgba(0, 217, 255, 0.1);
+      font-weight: 600;
+      border-color: #00d9ff;
+    }
+
+    #fileInput {
+      display: none;
+    }
+    
+    .demo-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid #00d9ff;
+      color: #00d9ff;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .demo-btn:active {
+      background: rgba(0, 217, 255, 0.2);
+      transform: scale(0.98);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #00d9ff;
+      font-family: 'Courier New', Courier, monospace; 
+    }
+
+    .receiver-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      gap: 20px;
+      max-width: 500px;
+    }
+
+    .camera-box {
+      flex: 1;
+      width: 100%;
+      background: #000;
+      border: 2px solid #222;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-box.active {
+      border-color: #00d9ff;
+      box-shadow: 0 0 30px rgba(0, 217, 255, 0.15);
+    }
+
+    #videoElement {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #canvasElement {
+      display: none;
+    }
+
+    .camera-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      aspect-ratio: 1;
+      border: 2px solid rgba(0, 217, 255, 0.5);
+      border-radius: 16px;
+      pointer-events: none;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); 
+    }
+
+    .scan-dot {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 10px;
+      height: 10px;
+      background: #ff0055;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+      box-shadow: 0 0 10px #ff0055;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    .camera-controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px;
+      background: #111;
+      border: 1px solid #333;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn.primary {
+      border-color: #00d9ff;
+      color: #000;
+      background: #00d9ff;
+    }
+    
+    .btn.danger {
+      border-color: #ff0055;
+      color: #ff0055;
+      background: rgba(255, 0, 85, 0.1);
+    }
+
+    .receiver-info {
+      width: 100%;
+      padding: 20px;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .info-title {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .progress {
+      width: 100%;
+      height: 6px;
+      background: #222;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00d9ff 0%, #0077ff 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+
+    .info-detail {
+      font-size: 14px;
+      color: #00d9ff;
+      font-weight: 600;
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 16px;
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s ease;
+      box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+    }
+
+    .download-btn:active {
+      transform: scale(0.96);
+      background: #00b3cc;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #errorMessage {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff0055;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: none; 
+      align-items: flex-end;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .settings-modal.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .settings-content {
+      width: 100%;
+      background: #111;
+      border-top: 1px solid #333;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 20px 20px 0 0;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .settings-modal.open .settings-content {
+      transform: translateY(0);
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .settings-title {
+      font-size: 16px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+    
+    .close-settings {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .setting {
+      margin-bottom: 24px;
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .setting-label {
+      font-size: 12px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+    }
+
+    .setting-value {
+      font-size: 14px;
+      color: #00d9ff;
+      font-family: 'Courier New', Courier, monospace;
+      background: rgba(0, 217, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .setting-slider {
+      width: 100%;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+      -webkit-appearance: none;
+      appearance: none;
+      outline: none;
+    }
+
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #00d9ff;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    }
+    
+    .modal-hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">DECIMEN</div>
+      <div class="nav">
+        <button class="nav-btn active" data-mode="send">Send</button>
+        <button class="nav-btn" data-mode="receive">Receive</button>
+        <button class="settings-btn" id="settingsBtn">⚙</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="errorMessage" class="hidden"></div>
+
+      <!-- SENDER SECTION -->
+      <div class="sender-view" id="senderView">
+        <div class="qr-display">
+          <div class="qr-box">
+            <div id="qrContainer">
+              <!-- NEW: We use an image tag that we will update rapidly, rather than building new canvases -->
+              <img id="qrImage" alt="Flashing QR Code" />
+              <span id="qrPlaceholder" style="color: #ccc; font-size: 14px; text-align: center;">Select a file below<br>to generate QR</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sender-panel">
+          <div class="file-selector">
+            <label class="file-label" id="fileLabel" for="fileInput">
+              Tap here to select a file
+              <span>(Images, small PDFs, text files)</span>
+            </label>
+            <input type="file" id="fileInput">
+          </div>
+          
+          <button class="demo-btn" id="demoBtn">Flash Test Data Instantly</button>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Frames</div>
+              <div class="stat-value" id="frameCount">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Speed</div>
+              <div class="stat-value" id="speedStat">0 KB/s</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Size</div>
+              <div class="stat-value" id="sizeStat">0 B</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECEIVER SECTION -->
+      <div class="receiver-view hidden" id="receiverView">
+        <div class="camera-box" id="cameraBox">
+          <video id="videoElement" playsinline autoplay muted></video>
+          <canvas id="canvasElement"></canvas>
+          <div class="camera-frame"></div>
+          <div class="scan-dot" id="scanDot" style="display:none"></div>
+        </div>
+
+        <div class="camera-controls">
+          <button class="btn primary" id="startCameraBtn">Start Camera</button>
+          <button class="btn danger hidden" id="stopCameraBtn">Stop Camera</button>
+        </div>
+
+        <div class="receiver-info">
+          <div class="info-title">Status: Waiting</div>
+          <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="info-detail" id="receiveInfo">Point camera at QR codes</div>
+        </div>
+
+        <button class="download-btn hidden" id="downloadBtn">Save Received File</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-content">
+      <div class="settings-header">
+        <div class="settings-title">Transfer Settings</div>
+        <button class="close-settings" id="closeSettingsBtn">&times;</button>
+      </div>
+
+      <div class="setting">
+        <label class="setting-label">
+          Transmission FPS
+          <span class="setting-value" id="txFpsValue">15</span>
+        </label>
+        <input type="range" class="setting-slider" id="txFpsSlider" min="5" max="30" value="15">
+        <div class="modal-hint">How fast the QR code changes. Lower this if the receiver phone is struggling to scan.</div>
+      </div>
+
+      <div class="setting">
+        <label class="setting-label">
+          Bytes per Frame
+          <span class="setting-value" id="bytesValue">500</span>
+        </label>
+        <input type="range" class="setting-slider" id="bytesSlider" min="200" max="800" value="500">
+        <div class="modal-hint">Amount of data per QR. Higher means fewer frames, but makes the QR complex and harder to read.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class DecimenApp {
+      constructor() {
+        this.mode = 'send';
+        this.isTransmitting = false;
+        this.fileData = null;
+        this.frames = [];
+        this.frameIdx = 0;
+        this.startTime = null;
+        this.receivedFrames = new Map();
+        this.stream = null;
+        this.transmissionTimer = null; 
+
+        this.settings = {
+          txFps: 15,          
+          bytesPerFrame: 500  
+        };
+
+        this.init();
+      }
+
+      init() {
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => this.switchMode(e.target.dataset.mode));
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+          if (e.target.files[0]) {
+            this.loadFile(e.target.files[0]);
+          }
+        });
+
+        document.getElementById('demoBtn').addEventListener('click', () => {
+          this.generateDemoData();
+        });
+
+        document.getElementById('startCameraBtn').addEventListener('click', () => this.startCamera());
+        document.getElementById('stopCameraBtn').addEventListener('click', () => this.stopCamera());
+
+        const modal = document.getElementById('settingsModal');
+        document.getElementById('settingsBtn').addEventListener('click', () => modal.classList.add('open'));
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('open'));
+        
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.remove('open');
+        });
+
+        ['txFpsSlider', 'bytesSlider'].forEach(id => {
+          const el = document.getElementById(id);
+          el.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (id === 'txFpsSlider') {
+              this.settings.txFps = val;
+              document.getElementById('txFpsValue').textContent = val;
+            } else if (id === 'bytesSlider') {
+              this.settings.bytesPerFrame = val;
+              document.getElementById('bytesValue').textContent = val;
+              if (this.fileData) this.prepareFrames();
+            }
+          });
+        });
+      }
+      
+      generateDemoData() {
+        const fakeText = "Hello Rohan! This is a test file sent via flashing QR codes. ".repeat(50);
+        const encoder = new TextEncoder();
+        const byteData = encoder.encode(fakeText);
+        
+        this.fileData = {
+          name: "demo-test-file.txt",
+          type: "text/plain",
+          data: byteData,
+          size: byteData.length
+        };
+        
+        document.getElementById('fileLabel').innerHTML = `
+            demo-test-file.txt
+            <span style="color: #00ff88;">(Demo Data Loaded!)</span>
+        `;
+        document.getElementById('fileLabel').classList.add('loaded');
+        document.getElementById('sizeStat').textContent = this.formatBytes(this.fileData.size);
+        
+        this.prepareFrames();
+        this.startTransmission();
+      }
+
+      showError(message, duration = 4000) {
+        const errorEl = document.getElementById('errorMessage');
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        setTimeout(() => errorEl.classList.add('hidden'), duration);
+      }
+
+      switchMode(newMode) {
+        this.mode = newMode;
+        
+        document.getElementById('senderView').classList.toggle('hidden', newMode !== 'send');
+        document.getElementById('receiverView').classList.toggle('hidden', newMode !== 'receive');
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === newMode);
+        });
+
+        if (newMode === 'receive') {
+           this.stopTransmission();
+        } else if (newMode === 'send') {
+           this.stopCamera();
+           if (this.fileData && this.frames.length > 0) {
+             this.startTransmission();
+           }
+        }
+      }
+
+      loadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.fileData = {
+            name: file.name,
+            type: file.type,
+            data: new Uint8Array(e.target.result),
+            size: file.size
+          };
+          
+          document.getElementById('fileLabel').innerHTML = `
+            ${file.name}
+            <span>Ready to transmit</span>
+          `;
+          document.getElementById('fileLabel').classList.add('loaded');
+          document.getElementById('sizeStat').textContent = this.formatBytes(file.size);
+          
+          this.prepareFrames();
+          this.startTransmission();
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      prepareFrames() {
+        if (!this.fileData) return;
+
+        const metadata = {
+          name: this.fileData.name,
+          type: this.fileData.type,
+          size: this.fileData.size
+        };
+
+        this.frames = [];
+        const dataSize = this.settings.bytesPerFrame;
+        const fileData = this.fileData.data;
+
+        for (let i = 0; i < fileData.length; i += dataSize) {
+          const chunk = fileData.slice(i, Math.min(i + dataSize, fileData.length));
+          this.frames.push({
+            seq: Math.floor(i / dataSize) + 1, 
+            total: Math.ceil(fileData.length / dataSize) + 1, 
+            type: 'data',
+            data: this.uint8ToBase64(chunk) 
+          });
+        }
+
+        this.frames.unshift({
+          seq: 0,
+          total: this.frames.length + 1,
+          type: 'meta',
+          meta: metadata
+        });
+      }
+
+      startTransmission() {
+        if (this.frames.length === 0) return;
+        
+        this.stopTransmission(); 
+        this.isTransmitting = true;
+        this.frameIdx = 0;
+        this.startTime = Date.now();
+
+        const transmit = () => {
+          if (!this.isTransmitting) return;
+
+          const frame = this.frames[this.frameIdx % this.frames.length];
+          this.displayQR(frame);
+
+          this.frameIdx++;
+          document.getElementById('frameCount').textContent = this.frameIdx;
+
+          const elapsed = (Date.now() - this.startTime) / 1000;
+          if (elapsed > 0) {
+              const totalSent = this.frameIdx * this.settings.bytesPerFrame;
+              const speed = (totalSent / elapsed / 1024).toFixed(1);
+              document.getElementById('speedStat').textContent = speed + ' KB/s';
+          }
+
+          this.transmissionTimer = setTimeout(transmit, 1000 / this.settings.txFps);
+        };
+
+        transmit();
+      }
+      
+      stopTransmission() {
+        this.isTransmitting = false;
+        if (this.transmissionTimer) {
+          clearTimeout(this.transmissionTimer);
+          this.transmissionTimer = null;
+        }
+      }
+
+      // NEW: Highly optimized QR rendering method for Mobile Phones
+      displayQR(frame) {
+        const qrData = JSON.stringify(frame);
+        
+        const img = document.getElementById('qrImage');
+        const placeholder = document.getElementById('qrPlaceholder');
+
+        try {
+          // toDataURL is much faster for flashing than building a new canvas element.
+          // It just creates an image link and we swap the source!
+          QRCode.toDataURL(qrData, {
+            width: 320, 
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' },
+            errorCorrectionLevel: 'L' 
+          }, (error, url) => {
+            if (error) {
+                console.error('QR Render Error:', error);
+                this.showError("Data block too large! Please lower 'Bytes per Frame' in Settings.");
+                this.stopTransmission();
+                return;
+            }
+            // Hide the text, show the image, and update it instantly
+            if (placeholder) placeholder.style.display = 'none';
+            img.style.display = 'block';
+            img.src = url; 
+          });
+        } catch (e) {
+            console.error('QR library error', e);
+        }
+      }
+
+      async startCamera() {
+        this.receivedFrames.clear();
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('receiveInfo').textContent = 'Point camera at QR codes';
+        document.getElementById('downloadBtn').classList.add('hidden');
+
+        try {
+          this.stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'environment',
+              width: { ideal: 640 }, 
+              height: { ideal: 480 }
+            },
+            audio: false
+          });
+
+          const video = document.getElementById('videoElement');
+          video.srcObject = this.stream;
+          
+          video.onloadedmetadata = () => {
+            video.play();
+            
+            document.getElementById('startCameraBtn').classList.add('hidden');
+            document.getElementById('stopCameraBtn').classList.remove('hidden');
+            document.getElementById('cameraBox').classList.add('active');
+            document.getElementById('scanDot').style.display = 'block';
+
+            this.scanQRs();
+          };
+          
+        } catch (err) {
+          console.error("Camera Error:", err);
+          this.showError('Camera access denied or unavailable. Please check permissions.');
+        }
+      }
+
+      stopCamera() {
+        if (this.stream) {
+          this.stream.getTracks().forEach(t => t.stop());
+          this.stream = null;
+        }
+        document.getElementById('startCameraBtn').classList.remove('hidden');
+        document.getElementById('stopCameraBtn').classList.add('hidden');
+        document.getElementById('cameraBox').classList.remove('active');
+        document.getElementById('scanDot').style.display = 'none';
+      }
+
+      scanQRs() {
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasElement');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        const scan = () => {
+          if (!this.stream) return; 
+
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert", 
+            });
+            
+            if (code) {
+              try {
+                const frame = JSON.parse(code.data);
+                this.processFrame(frame);
+              } catch (e) {}
+            }
+          }
+
+          requestAnimationFrame(scan);
+        };
+
+        scan();
+      }
+
+      processFrame(frame) {
+        const key = frame.seq;
+        
+        if (!this.receivedFrames.has(key)) {
+          this.receivedFrames.set(key, frame);
+
+          const totalExpected = frame.total;
+          const progress = Math.min(100, Math.floor((this.receivedFrames.size / totalExpected) * 100));
+          
+          document.getElementById('progressBar').style.width = progress + '%';
+          document.querySelector('.info-title').textContent = `Receiving: ${Math.round(progress)}%`;
+          document.getElementById('receiveInfo').textContent = `${this.receivedFrames.size} of ${totalExpected} frames`;
+
+          if (this.receivedFrames.size >= totalExpected) {
+            this.tryReconstruct();
+          }
+        }
+      }
+
+      tryReconstruct() {
+        const frames = Array.from(this.receivedFrames.values());
+        
+        const metaFrame = frames.find(f => f.type === 'meta');
+        if (!metaFrame) return; 
+
+        const dataFrames = frames
+            .filter(f => f.type === 'data')
+            .sort((a, b) => a.seq - b.seq);
+
+        if (dataFrames.length === 0) return;
+
+        try {
+          const fileDataArray = [];
+          for (const frame of dataFrames) {
+            const bytes = this.base64ToUint8(frame.data);
+            fileDataArray.push(...bytes);
+          }
+
+          this.handleFileReceived(metaFrame.meta, new Uint8Array(fileDataArray));
+        } catch (e) {
+          console.error("Reconstruction error:", e);
+          this.showError("Error reconstructing file.");
+        }
+      }
+
+      handleFileReceived(metadata, fileData) {
+        this.stopCamera(); 
+
+        document.querySelector('.info-title').textContent = "Transfer Complete!";
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressBar').style.background = '#00ff88'; 
+        document.getElementById('receiveInfo').textContent = `${metadata.name} (${this.formatBytes(metadata.size)})`;
+        
+        const btn = document.getElementById('downloadBtn');
+        btn.classList.remove('hidden');
+        
+        btn.onclick = () => {
+          const blob = new Blob([fileData], { type: metadata.type || 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = metadata.name;
+          document.body.appendChild(link); 
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url); 
+        };
+      }
+
+      uint8ToBase64(uint8) {
+        let binary = '';
+        const len = uint8.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(uint8[i]);
+        }
+        return btoa(binary);
+      }
+
+      base64ToUint8(str) {
+        const binary = atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      new DecimenApp();
+    });
+  </script>
+</body>
+</html>
+
+
+```
